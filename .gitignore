@@ -1,0 +1,24 @@
+# Ignorar entornos virtuales
+venv/
+env/
+.venv/
+.env/
+
+# Ignorar archivos de dependencias instaladas con pip
+*.egg-info/
+*.egg
+*.pyc
+__pycache__/
+
+# Ignorar archivos de configuración de Python
+.python-version
+.pytest_cache/
+
+# Ignorar caché de Jupyter Notebook
+.ipynb_checkpoints/
+
+# Archivos generados por IDEs y editores de código
+.vscode/
+.idea/
+.DS_Store  # para MacOS
+Thumbs.db  # para Windows

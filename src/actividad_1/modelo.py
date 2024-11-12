@@ -74,5 +74,65 @@ class Modelo:
             print(f"Error al contar los registros: {e}")
             return None
 
-    
-    
+    def prueba_integridad(self, nombre_schema, nombre_tabla):
+        try:
+        # 1. Verificar si existen valores nulos en las columnas no nulas
+            query_nulls = f"""
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_schema = '{nombre_schema}'
+                AND table_name = '{nombre_tabla}'
+                AND is_nullable = 'NO'
+                """
+            with self.conexion.connect() as conexion:
+                result_nulls = conexion.execute(text(query_nulls))
+                non_nullable_columns = [row['column_name'] for row in result_nulls]
+        
+        # analizar si hay registros con valores nulos en las columnas no nulas
+            if non_nullable_columns:
+                null_check_query = f"""
+                    SELECT {', '.join(non_nullable_columns)}
+                    FROM {nombre_schema}.{nombre_tabla}
+                    WHERE {" OR ".join([f"{col} IS NULL" for col in non_nullable_columns])}
+                """
+                with self.conexion.connect() as conexion:
+                    result = conexion.execute(text(null_check_query))
+                    null_rows = result.fetchall()
+                    if null_rows:
+                        print(f"Se encontraron registros con valores nulos en las columnas no nulas: {non_nullable_columns}")
+                        return False
+            else:
+                print("No se encontraron columnas no nulas, omitiendo la verificación de valores nulos.")
+            
+        # 2. Comprobación de unicidad de la clave primaria 
+            query_primary_key = f"""
+                SELECT a.attname
+                FROM pg_index i
+                JOIN pg_attribute a ON a.attnum = ANY(i.indkey)
+                WHERE i.indrelid = '{nombre_schema}.{nombre_tabla}'::regclass
+                AND i.indisprimary
+            """
+            with self.conexion.connect() as conexion:
+                result_primary_key = conexion.execute(text(query_primary_key))
+                primary_key_columns = [row['attname'] for row in result_primary_key]
+            
+            # Verificar si la clave primaria tiene duplicados
+            if primary_key_columns:
+                pk_check_query = f"""
+                    SELECT {', '.join(primary_key_columns)}
+                    FROM {nombre_schema}.{nombre_tabla}
+                    GROUP BY {', '.join(primary_key_columns)}
+                    HAVING COUNT(*) > 1
+                """
+                with self.conexion.connect() as conexion:
+                    result = conexion.execute(text(pk_check_query))
+                    duplicates = result.fetchall()
+                    if duplicates:
+                        print(f"Se encontraron registros duplicados en la clave primaria: {primary_key_columns}")
+                        return False
+
+            print("La prueba de integridad fue exitosa. No se encontraron problemas.")
+            return True
+        except Exception as e:
+            print(f"Error al realizar la prueba de integridad: {e}")
+            return False

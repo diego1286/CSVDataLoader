@@ -17,3 +17,6 @@ modelo = Modelo(host, port, nombredb, user, password)
 modelo.create_schema(nombre_schema)
 modelo.create_table(ruta_sql) 
 modelo.insert_df(ruta_csv=ruta_csv, nombre_schema=nombre_schema, nombre_tabla="cars_electrics", tipo_insert='append')
+
+registros_totales = modelo.contar_registros(nombre_schema, nombre_tabla)
+print(f"Número total de registros en la tabla {nombre_schema}.{nombre_tabla}: {registros_totales}")

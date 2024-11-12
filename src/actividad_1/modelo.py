@@ -63,5 +63,16 @@ class Modelo:
         except Exception as e:  
             print(f"Error al insertar el dataframe: {e}")
 
+    def contar_registros(self, nombre_schema, nombre_tabla):
+        try:
+            query = f'SELECT COUNT(*) FROM {nombre_schema}.{nombre_tabla};'
+            with self.conexion.connect() as conexion:
+                result = conexion.execute(text(query))
+                count = result.scalar()  
+            return count
+        except Exception as e:
+            print(f"Error al contar los registros: {e}")
+            return None
+
     
     
